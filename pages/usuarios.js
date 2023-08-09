@@ -45,7 +45,6 @@ const Usuarios = () => {
     if (!usuario) {
         return router.push('/');
     }
-    console.log('filteredData', filteredData)
 
     return (
         <div>
@@ -85,7 +84,7 @@ const Usuarios = () => {
 
                             const createdTime = new Date(seconds * 1000 + nanoseconds / 1000000);
 
-                            console.log('createdTime', createdTime)
+                            //console.log('createdTime', createdTime)
 
                             return (
                                 <tr key={item.id}>

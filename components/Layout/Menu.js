@@ -43,7 +43,7 @@ const Menu = () => {
                         <BotonSide>Crear Cuenta</BotonSide>
                     </Link>
 
-                    <Link href="/"
+                    <Link href="/editarUsuarios"
                         css={css`
                         text-decoration: none;
                     `}
@@ -51,6 +51,7 @@ const Menu = () => {
                         <BotonSide >
                             Ver usuario
                         </BotonSide>
+
                     </Link>
                 </ul>
             </nav>

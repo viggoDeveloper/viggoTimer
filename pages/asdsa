@@ -1,0 +1,110 @@
+import React, { useEffect, useState } from 'react';
+import firebase from 'firebase/app';
+import 'firebase/auth';
+import Layout from "@/components/Layout/Layout";
+
+export const EditUser = () => {
+
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [newEmail, setNewEmail] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword('viggo@mail.co', '123456');
+                const idToken = await userCredential.user.getIdToken();
+                console.log('idToken', idToken)
+
+                const userRecords = await firebase.auth().listUsers(1000); // Puedes ajustar el número de usuarios a consultar
+                setUsers(userRecords.users);
+            } catch (error) {
+                console.error('Error al obtener usuarios:', error);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    const handleEditEmail = (user) => {
+        setSelectedUser(user);
+        setNewEmail('');
+        setNewPassword('');
+    };
+
+    const handleEditPassword = (user) => {
+        setSelectedUser(user);
+        setNewEmail('');
+        setNewPassword('');
+    };
+
+    const handleSaveChanges = async () => {
+        try {
+            if (selectedUser && (newEmail || newPassword)) {
+                const userToUpdate = firebase.auth().getUser(selectedUser.uid);
+                if (newEmail) {
+                    await userToUpdate.updateEmail(newEmail);
+                }
+                if (newPassword) {
+                    await userToUpdate.updatePassword(newPassword);
+                }
+                console.log('Cambios guardados exitosamente');
+            }
+        } catch (error) {
+            console.error('Error al guardar los cambios:', error);
+        } finally {
+            setSelectedUser(null);
+        }
+    };
+
+    return (
+        <Layout>
+            <div>
+                <h1>Gestión de Usuarios</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Correo Electrónico</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.map((user) => (
+                            <tr key={user.uid}>
+                                <td>{user.email}</td>
+                                <td>
+                                    <button onClick={() => handleEditEmail(user)}>Editar Correo</button>
+                                    <button onClick={() => handleEditPassword(user)}>Editar Contraseña</button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {selectedUser && (
+                    <div>
+                        {selectedUser.email === newEmail ? (
+                            <input
+                                type="password"
+                                placeholder="Nueva Contraseña"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                        ) : (
+                            <input
+                                type="email"
+                                placeholder="Nuevo Correo Electrónico"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                            />
+                        )}
+                        <button onClick={handleSaveChanges}>Guardar Cambios</button>
+                    </div>
+                )}
+            </div>
+        </Layout>
+    );
+}
+
+export default EditUser;
+
