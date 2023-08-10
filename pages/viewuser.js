@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import Layout from "../components/Layout/Layout";
-import Link from "next/link";
 import { FirebaseContext } from '@/firebase';
 import Router, { useRouter } from 'next/router';
 import FirebaseExcelDownloadButton from "./descargarInforme";
@@ -14,28 +13,21 @@ const Usuarios = () => {
     const [searchCedula, setSearchCedula] = useState('');
     const [showFilter, setShowFilter] = useState(false);
 
-    const [selectedUserId, setSelectedUserId] = useState(null);
-
-    const handleUserClick = (userId) => {
-        setSelectedUserId(userId);
-    };
-
     const { usuario, firebase } = useContext(FirebaseContext);
 
     const router = useRouter();
 
     useEffect(() => {
         const getDataUser = firebase.queryCollection();
-        const collectionRef = getDataUser.collection('users')
+        const collectionRef = getDataUser.collection('timeUser')
 
-        const unsubscribe = collectionRef.onSnapshot((snapshot) => {
+        const unsubscribe = collectionRef.orderBy('hour', 'desc').onSnapshot((snapshot) => {
             const newData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             setData(newData);
             setFilteredData(newData);
         });
         return () => unsubscribe();
     }, []);
-    console.log(data)
 
     useEffect(() => {
         // Filtrar los datos en función del valor ingresado por el usuario
@@ -50,6 +42,27 @@ const Usuarios = () => {
         setFilteredData(filtered);
     }, [filterValue, data]);
 
+    const handleSearch = () => {
+        if (searchCedula) {
+            const filteredItems = data.filter((item) =>
+                item.document.includes(searchCedula)
+            );
+            setFilteredData(filteredItems);
+        } else {
+            setFilteredData(data);
+        }
+    };
+
+    const handleClearFilter = () => {
+        setSearchCedula('');
+        setFilteredData(data);
+    };
+
+    const handleToggleFilter = () => {
+        setShowFilter(!showFilter);
+        setFilteredData(data);
+    };
+
     if (!usuario) {
         return router.push('/');
     }
@@ -59,43 +72,60 @@ const Usuarios = () => {
             <Layout>
                 <h1>Desde usuarios</h1>
                 <FirebaseExcelDownloadButton />
-
+                {/* <input
+                    type="text"
+                    placeholder="Filtrar por Documento o Apellido"
+                    value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                /> */}
+               
                 <table>
                     <thead>
                         <tr>
-                            <th>Documento</th>
                             <th>Nombre</th>
                             <th>Apellido</th>
+                            <th>Documento</th>
                             <th>Correo</th>
                             <th>Ciudad</th>
                             <th>Marca</th>
                             <th>Sede</th>
-                            <th>Ver</th>
+                            <th>Motivo</th>
+                            <th>Telefono</th>
+                            <th>Horario</th>
+                            <th>Hora - Fecha</th>
+                            <th>Foto</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((user) => {
+                        {filteredData.map((item) => {
+
+                            const seconds = item.hour.seconds;
+                            const nanoseconds = item.hour.nanoseconds;
+
+                            const createdTime = new Date(seconds * 1000 + nanoseconds / 1000000);
+
+                            //console.log('createdTime', createdTime)
 
                             return (
-
-                                <tr key={user.id}>
-                                    <td>{user.document}</td>
-                                    <td>{user.name}</td>
-                                    <td>{user.lastname}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.city}</td>
-                                    <td>{user.brand}</td>
-                                    <td>{user.campus}</td>
+                                <tr key={item.id}>
+                                    <td>{item.name}</td>
+                                    <td>{item.lastname}</td>
+                                    <td>{item.document}</td>
+                                    <td>{item.email}</td>
+                                    <td>{item.city}</td>
+                                    <td>{item.brand}</td>
+                                    <td>{item.campus}</td>
+                                    <td>{item.reason}</td>
+                                    <td>{item.phone}</td>
+                                    <td>{item.timetype}</td>
+                                    <td>{createdTime.toLocaleString()}</td>
                                     <td>
-                                        <Link href={`/userdetail?id=${user.id}`}>
-                                            Ver
-                                        </Link>
+
+                                        {/* <ImageZoom imageUrl={item.photoCheck} alt="Imagen 1" /> */}
                                     </td>
                                 </tr>
                             )
-
                         })}
-
                     </tbody>
                 </table>
 
@@ -105,34 +135,3 @@ const Usuarios = () => {
 };
 
 export default Usuarios;
-
-
-// {filteredData.map((item) => {
-
-//     const seconds = item.hour.seconds;
-//     const nanoseconds = item.hour.nanoseconds;
-
-//     const createdTime = new Date(seconds * 1000 + nanoseconds / 1000000);
-
-//     //console.log('createdTime', createdTime)
-
-//     return (
-//         <tr key={item.id}>
-//             <td>{item.name}</td>
-//             <td>{item.lastname}</td>
-//             <td>{item.document}</td>
-//             <td>{item.email}</td>
-//             <td>{item.city}</td>
-//             <td>{item.brand}</td>
-//             <td>{item.campus}</td>
-//             <td>{item.reason}</td>
-//             <td>{item.phone}</td>
-//             <td>{item.timetype}</td>
-//             <td>{createdTime.toLocaleString()}</td>
-//             <td>
-
-//                 {/* <ImageZoom imageUrl={item.photoCheck} alt="Imagen 1" /> */}
-//             </td>
-//         </tr>
-//     )
-// })}
