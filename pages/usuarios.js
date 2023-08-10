@@ -3,14 +3,15 @@ import Layout from "../components/Layout/Layout";
 import { FirebaseContext } from '@/firebase';
 import Router, { useRouter } from 'next/router';
 import FirebaseExcelDownloadButton from "./descargarInforme";
-import ImageZoom from "@/components/ui/Images";
-import { compress } from "@/next.config";
+import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
 
 const Usuarios = () => {
 
     const [data, setData] = useState([]);
     const [filterValue, setFilterValue] = useState('');
     const [filteredData, setFilteredData] = useState([]);
+    const [searchCedula, setSearchCedula] = useState('');
+    const [showFilter, setShowFilter] = useState(false);
 
     const { usuario, firebase } = useContext(FirebaseContext);
 
@@ -41,6 +42,26 @@ const Usuarios = () => {
         setFilteredData(filtered);
     }, [filterValue, data]);
 
+    const handleSearch = () => {
+        if (searchCedula) {
+            const filteredItems = data.filter((item) =>
+                item.document.includes(searchCedula)
+            );
+            setFilteredData(filteredItems);
+        } else {
+            setFilteredData(data);
+        }
+    };
+
+    const handleClearFilter = () => {
+        setSearchCedula('');
+        setFilteredData(data);
+    };
+
+    const handleToggleFilter = () => {
+        setShowFilter(!showFilter);
+        setFilteredData(data);
+    };
 
     if (!usuario) {
         return router.push('/');
@@ -53,18 +74,45 @@ const Usuarios = () => {
 
                 <FirebaseExcelDownloadButton />
 
-                <input
+                {/* <input
                     type="text"
                     placeholder="Filtrar por Documento o Apellido"
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
-                />
+                /> */}
+
+
+
+                {showFilter && (
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Buscar por Cédula"
+                            value={searchCedula}
+                            onChange={(e) => setSearchCedula(e.target.value)}
+                        />
+                        <button onClick={handleSearch}>
+                            <FaSearch />
+                        </button>
+                        <button onClick={handleClearFilter}>
+                            <FaTimes />
+                        </button>
+                        <button onClick={handleToggleFilter}>
+                            <FaTimes />
+                        </button>
+                    </div>
+                )}
                 <table>
                     <thead>
                         <tr>
                             <th>Nombre</th>
                             <th>Apellido</th>
-                            <th>Documento</th>
+                            <th>Documento
+                                <button onClick={handleToggleFilter}>
+                                    {showFilter ? <FaFilter /> : <FaSearch />}
+                                </button>
+
+                            </th>
                             <th>Correo</th>
                             <th>Ciudad</th>
                             <th>Marca</th>

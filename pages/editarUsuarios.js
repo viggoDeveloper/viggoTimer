@@ -7,20 +7,6 @@ export const EditUser = () => {
 
 
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-          try {
-            const userRecords = await admin.auth().listUsers();
-            setUsers(userRecords.users);
-          } catch (error) {
-            console.error('Error al obtener usuarios:', error);
-          }
-        };
-    
-        fetchUsers();
-      }, []);
-
-
 
     return (
         <Layout>
