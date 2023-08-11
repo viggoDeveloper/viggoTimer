@@ -24,13 +24,30 @@ const UserDetail = () => {
                         .get();
                 const userData = snapshot.docs.map((doc) => doc.data());
                 setData(userData)
+
+                const userTimerData = snapshot.docs.map((doc) => {
+                    console.log('doc', doc.data())
+                    const { document } = doc.data();
+                    console.log('desde usertTime', document)
+
+
+                    const timestamp = doc.data().hour;
+                    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                    const day = date.getDate();
+                    const month = date.getMonth() + 1; // Sumamos 1 porque los meses en JavaScript son base 0
+                    const year = date.getFullYear();
+                    return {
+                        timetype: doc.data().timetype,
+                        day: `${day}/${month}/${year}`,
+                    };
+                })
             } catch (error) {
                 console.log('Error usuario no encontrado', error);
             }
         }
         fetchUserById()
     }, [id]);
-    console.log('data', data)
+    //console.log('data', data)
 
 
     // Función para formatear la fecha y obtener el día de la semana
