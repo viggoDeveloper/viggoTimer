@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
 
           table {
             position: absolute;
-            left: 20%;
+            left: 25%;
             width: 70%;
             height: 60%;
             display: block;

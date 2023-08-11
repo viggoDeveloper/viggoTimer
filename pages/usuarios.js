@@ -35,7 +35,7 @@ const Usuarios = () => {
         });
         return () => unsubscribe();
     }, []);
-    console.log(data)
+    //console.log(data)
 
     useEffect(() => {
         // Filtrar los datos en función del valor ingresado por el usuario
@@ -93,9 +93,7 @@ const Usuarios = () => {
                                     </td>
                                 </tr>
                             )
-
                         })}
-
                     </tbody>
                 </table>
 

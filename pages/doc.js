@@ -97,5 +97,61 @@ const FirestoreTable = () => {
     </div>
   );
 };
+import React, { useEffect, useState } from 'react';
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
-export default FirestoreTable;
+const UserTimerData = ({ userId }) => {
+  const [userTimerData, setUserTimerData] = useState([]);
+
+  useEffect(() => {
+    const fetchUserTimerData = async () => {
+      try {
+        const db = firebase.firestore();
+        const userTimerRef = db.collection('userTimer');
+
+        // Crea una referencia al documento de usuario con el ID recibido
+        const userRef = db.collection('users').doc(userId);
+
+        // Consulta y ordena los documentos en orden descendente según el campo hour, filtrando por timetype 'Hora de Entrada' y 'Hora de Salida'
+        const snapshot = await userTimerRef
+          .where('idUser', '==', userRef)
+          .where('timetype', 'in', ['Hora de Entrada', 'Hora de Salida'])
+          .orderBy('hour', 'desc')
+          .get();
+
+        const userTimerData = snapshot.docs.map((doc) => {
+          const timestamp = doc.data().hour;
+          const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+          const day = date.getDate();
+          const month = date.getMonth() + 1; // Sumamos 1 porque los meses en JavaScript son base 0
+          const year = date.getFullYear();
+          return {
+            timetype: doc.data().timetype,
+            day: `${day}/${month}/${year}`,
+          };
+        });
+        setUserTimerData(userTimerData);
+      } catch (error) {
+        console.error('Error fetching userTimer data:', error);
+      }
+    };
+
+    fetchUserTimerData();
+  }, [userId]);
+
+  return (
+    <div>
+      <h2>Datos de Tiempo del Usuario</h2>
+      <ul>
+        {userTimerData.map((data, index) => (
+          <li key={index}>
+            {data.day} - {data.timetype}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default UserTimerData;

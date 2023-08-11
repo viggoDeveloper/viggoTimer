@@ -43,7 +43,7 @@ const Menu = () => {
                         <BotonSide>Crear Cuenta</BotonSide>
                     </Link>
 
-                    <Link href="/editarUsuarios"
+                    {/* <Link href="/editarUsuarios"
                         css={css`
                         text-decoration: none;
                     `}
@@ -52,7 +52,7 @@ const Menu = () => {
                             Ver usuario
                         </BotonSide>
 
-                    </Link>
+                    </Link> */}
                 </ul>
             </nav>
         </ContenedorIzq>
