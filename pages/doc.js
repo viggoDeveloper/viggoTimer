@@ -97,6 +97,7 @@ const FirestoreTable = () => {
     </div>
   );
 };
+
 import React, { useEffect, useState } from 'react';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
@@ -126,9 +127,15 @@ const UserTimerData = ({ userId }) => {
           const day = date.getDate();
           const month = date.getMonth() + 1; // Sumamos 1 porque los meses en JavaScript son base 0
           const year = date.getFullYear();
+          const hours = date.getHours();
+          const minutes = date.getMinutes();
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+          const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+          const formattedDateTime = `${day}/${month}/${year} - ${formattedHours}:${formattedMinutes} ${ampm}`;
           return {
             timetype: doc.data().timetype,
-            day: `${day}/${month}/${year}`,
+            dateTime: formattedDateTime,
           };
         });
         setUserTimerData(userTimerData);
@@ -146,7 +153,7 @@ const UserTimerData = ({ userId }) => {
       <ul>
         {userTimerData.map((data, index) => (
           <li key={index}>
-            {data.day} - {data.timetype}
+            {data.dateTime} - {data.timetype}
           </li>
         ))}
       </ul>
