@@ -7,13 +7,26 @@ import Layout from '@/components/Layout/Layout';
 const UserDetail = () => {
     const router = useRouter();
     const { id } = router.query;
-    const [data, setData] = useState([]);
+    const [userData, setUserData] = useState({});
     const [userTimerData, setUserTimerData] = useState([]);
 
     const { usuario, firebase } = useContext(FirebaseContext);
 
     useEffect(() => {
-        const fetchUserById = async () => {
+        const fetchUserData = async () => {
+            try {
+                const db = firebase.queryCollection();
+                const userRefCollection = db.collection('users').doc(id);
+                const userDoc = await userRefCollection.get();
+                if (userDoc.exists) {
+                    setUserData(userDoc.data());
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        const fetchUserTimerData = async () => {
             try {
                 const db = firebase.queryCollection();
                 const userRefCollection = db.collection('timeUser');
@@ -24,28 +37,14 @@ const UserDetail = () => {
                         .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida'])
                         .orderBy('hour', 'desc')
                         .get();
-                const userData = snapshot.docs.map((doc) => doc.data());
-                setData(userData)
 
-                const userTimerData = snapshot.docs.map((doc) => {
-                    const {
-                        brand,
-                        campus,
-                        city,
-                        document,
-                        email,
-                        hour,
-                        lastname,
-                        name,
-                        phone,
-                        post,
-                        reason,
-                        timetype
-                    } = doc.data();
-
-                    const timestamp = hour;
+                const groupedData = {};
+                snapshot.docs.forEach((doc) => {
+                    const timestamp = doc.data().hour;
                     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-                    const day = date.getDate();
+                    const day = date.toDateString();
+
+                    const days = date.getDate();
                     const month = date.getMonth() + 1; // Sumamos 1 porque los meses en JavaScript son base 0
                     const year = date.getFullYear();
                     const options = { weekday: 'long' };
@@ -58,41 +57,87 @@ const UserDetail = () => {
                     const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
                     const formattedDateTime = `${formattedHours}:${formattedMinutes} ${ampm}`;
 
-                    return {
-                        brand,
-                        campus,
-                        city,
-                        email,
-                        lastname,
-                        document,
-                        name,
-                        phone,
-                        post,
-                        reason,
+
+                    if (!groupedData[day]) {
+                        groupedData[day] = [];
+                    }
+
+                    groupedData[day].push({
+                        timetype: doc.data().timetype,
+                        timestamp: date,
                         formattedDate,
                         formattedDateTime,
-                        timetype: timetype,
-                        day: `${day}/${month}/${year}`,
-                    };
+                        day: `${days}/${month}/${year}`,
+                    });
+
                 });
-                setUserTimerData(userTimerData);
+
+                const calculatedData = [];
+                for (const day in groupedData) {
+                    if (groupedData[day].length === 2) {
+
+                        const entryRecord = groupedData[day].find(record => {
+                            return record.timetype === 'Hora de Entrada';
+                        });
+                        const exitRecord = groupedData[day].find(record => {
+                            return record.timetype === 'Hora De Salida';
+                        });
+
+
+                        if (entryRecord && exitRecord) {
+                            const entryTimestamp = entryRecord.timestamp;
+                            const exitTimestamp = exitRecord.timestamp;
+
+                            const diffMillis = exitTimestamp - entryTimestamp;
+                            const diffHours = Math.floor(diffMillis / (1000 * 60 * 60));
+                            const diffMinutes = Math.floor((diffMillis % (1000 * 60 * 60)) / (1000 * 60));
+                            const overtimeHours = Math.max(0, diffHours - 8); // Calculate overtime hours
+                            const overtimeMinutes = (overtimeHours - Math.floor(overtimeHours)) * 60;
+
+
+                            calculatedData.push({
+                                day,
+                                entry: entryTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                exit: exitTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                totalHours: `${diffHours} hrs ${diffMinutes} mins`,
+                                overtime: `${Math.floor(overtimeHours)} hrs ${overtimeMinutes.toFixed(0)} mins`,
+                            });
+                        } else {
+                            if (entryRecord) {
+                                calculatedData.push({
+                                    day,
+                                    entry: entryRecord.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                    exit: 'No marcó hora de salida',
+                                    totalHours: 'N/A',
+                                });
+                            } else if (exitRecord) {
+                                calculatedData.push({
+                                    day,
+                                    entry: 'No marcó hora de entrada',
+                                    exit: exitRecord.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                    totalHours: 'N/A',
+                                });
+                            } else {
+                                calculatedData.push({
+                                    day,
+                                    entry: 'No marcó hora de entrada',
+                                    exit: 'No marcó hora de salida',
+                                    totalHours: 'N/A',
+                                });
+                            }
+                        }
+                    }
+                }
+                setUserTimerData(calculatedData);
             } catch (error) {
-                console.log('Error usuario no encontrado', error);
+                console.error('Error fetching userTimer data:', error);
             }
-        }
-        fetchUserById()
+        };
+        fetchUserData();
+        fetchUserTimerData();
     }, [id]);
     console.log('data', userTimerData)
 
-
-    // Función para formatear la fecha y obtener el día de la semana
-    // const formatDateAndDay = (timestamp) => {
-    //     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    //     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    //     //year: 'numeric', month: 'long', day: 'numeric'
-    //     const formattedDate = date.toLocaleDateString('es-ES', options);
-    //     return formattedDate;
-    // };
     return (
         <Layout>
             <Link href="/usuarios">
@@ -102,34 +147,30 @@ const UserDetail = () => {
             <table>
                 <thead>
                     <tr>
-                        <th>Documento</th>
                         <th>Nombre</th>
-                        <th>Ciudad</th>
-                        <th>Marca</th>
-                        <th>Sede</th>
-                        <th>Horario</th>
+                        <th>Apellido</th>
+                        <th>Email</th>
                         <th>Fecha</th>
-                        <th>Dia</th>
-                        <th>Hora</th>
+                        <th>Hora de Entrada</th>
+                        <th>Hora de Salida</th>
+                        <th>Total horas</th>
+                        <th>Horas extras</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {userTimerData.map((user, i) => {
+                    {userTimerData.map((data, index) => (
+                        <tr key={index}>
+                            <td>{userData.name}</td>
+                            <td>{userData.lastname}</td>
+                            <td>{userData.email}</td>
+                            <td>{data.day}</td>
+                            <td>{data.entry}</td>
+                            <td>{data.exit}</td>
+                            <td>{data.totalHours}</td>
 
-                        return (
-                            <tr key={i}>
-                                <td>{user.document}</td>
-                                <td>{user.name}</td>
-                                <td>{user.city}</td>
-                                <td>{user.brand}</td>
-                                <td>{user.campus}</td>
-                                <td>{user.timetype}</td>
-                                <td>{user.day}</td>
-                                <td>{user.formattedDate}</td>
-                                <td>{user.formattedDateTime}</td>
-                            </tr>
-                        )
-                    })}
+                            <td>{data.overtime}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </Layout>

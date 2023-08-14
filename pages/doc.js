@@ -162,3 +162,97 @@ const UserTimerData = ({ userId }) => {
 };
 
 export default UserTimerData;
+
+// ===============
+import React, { useEffect, useState } from 'react';
+import firebase from 'firebase/app';
+import 'firebase/firestore';
+
+const UserTimerDataa = ({ userId }) => {
+  const [userData, setUserData] = useState({});
+  const [userTimerData, setUserTimerData] = useState([]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const db = firebase.firestore();
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+          setUserData(userDoc.data());
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    const fetchUserTimerData = async () => {
+      try {
+        const db = firebase.firestore();
+        const userTimerRef = db.collection('userTimer');
+
+        const userRef = db.collection('users').doc(userId);
+
+        const snapshot = await userTimerRef
+          .where('idUser', '==', userRef)
+          .where('timetype', 'in', ['Hora de Entrada', 'Hora de Salida'])
+          .orderBy('hour')
+          .get();
+
+        const groupedData = {};
+        snapshot.docs.forEach((doc) => {
+          const timestamp = doc.data().hour;
+          const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+          const day = date.toDateString();
+
+          if (!groupedData[day]) {
+            groupedData[day] = [];
+          }
+
+          groupedData[day].push({
+            timetype: doc.data().timetype,
+            timestamp: date,
+          });
+        });
+
+        const calculatedData = [];
+        for (const day in groupedData) {
+          const entryRecord = groupedData[day].find(record => record.timetype === 'Hora de Entrada');
+          const exitRecord = groupedData[day].find(record => record.timetype === 'Hora de Salida');
+          
+          if (entryRecord && exitRecord) {
+            const entryTimestamp = entryRecord.timestamp;
+            const exitTimestamp = exitRecord.timestamp;
+            
+            const diffMillis = exitTimestamp - entryTimestamp;
+            const diffHours = Math.floor(diffMillis / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMillis % (1000 * 60 * 60)) / (1000 * 60));
+            
+            calculatedData.push({
+              day,
+              entry: entryTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              exit: exitTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              totalHours: `${diffHours} hrs ${diffMinutes} mins`,
+            });
+          } else if (entryRecord) {
+            calculatedData.push({
+              day,
+              entry: entryRecord.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              exit: 'No marcó salida',
+              totalHours: 'N/A',
+            });
+          }
+        }
+
+        setUserTimerData(calculatedData);
+      } catch (error) {
+        console.error('Error fetching userTimer data:', error);
+      }
+    };
+
+    fetchUserData();
+    fetchUserTimerData();
+  }, [userId]);
+
+  // ... (return statement)
+};
