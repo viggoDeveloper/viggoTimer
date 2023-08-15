@@ -63,21 +63,21 @@ const Usuarios = () => {
         setFilteredData(data);
     };
 
-    if (!usuario) {
-        return router.push('/');
-    }
+    // if (!usuario) {
+    //     return router.push('/');
+    // }
 
     return (
         <div>
             <Layout>
                 <h1>Desde usuarios</h1>
                 <FirebaseExcelDownloadButton />
-                {/* <input
+                <input
                     type="text"
                     placeholder="Filtrar por Documento o Apellido"
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
-                /> */}
+                />
                
                 <table>
                     <thead>
@@ -98,6 +98,8 @@ const Usuarios = () => {
                     </thead>
                     <tbody>
                         {filteredData.map((item) => {
+
+                            console.log(item)
 
                             const seconds = item.hour.seconds;
                             const nanoseconds = item.hour.nanoseconds;

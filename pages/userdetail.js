@@ -4,6 +4,8 @@ import { FirebaseContext } from '@/firebase';
 import Link from 'next/link';
 import Layout from '@/components/Layout/Layout';
 
+import { calculateWorkHours, getSpanishDayOfWeek, formatTimeWithAmPm } from '@/hooks/helpers';
+
 const UserDetail = () => {
     const router = useRouter();
     const { id } = router.query;
@@ -40,95 +42,81 @@ const UserDetail = () => {
 
                 const groupedData = {};
                 snapshot.docs.forEach((doc) => {
-                    const timestamp = doc.data().hour;
+                    const data = doc.data();
+                    const timestamp = data.hour;
                     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-                    const day = date.toDateString();
-
-                    const days = date.getDate();
-                    const month = date.getMonth() + 1; // Sumamos 1 porque los meses en JavaScript son base 0
-                    const year = date.getFullYear();
-                    const options = { weekday: 'long' };
-                    const formattedDate = date.toLocaleDateString('es-ES', options);
-
-                    const hours = date.getHours();
-                    const minutes = date.getMinutes();
-                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                    const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
-                    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-                    const formattedDateTime = `${formattedHours}:${formattedMinutes} ${ampm}`;
-
+                    const day = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
                     if (!groupedData[day]) {
                         groupedData[day] = [];
                     }
 
                     groupedData[day].push({
-                        timetype: doc.data().timetype,
+                        timetype: data.timetype,
                         timestamp: date,
-                        formattedDate,
-                        formattedDateTime,
-                        day: `${days}/${month}/${year}`,
+                        formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     });
-
                 });
 
-                const calculatedData = [];
-                for (const day in groupedData) {
-                    if (groupedData[day].length === 2) {
+                const userTimerData = Object.entries(groupedData).map(([day, records]) => {
+                    const entryRecord = records.find((record) => record.timetype === 'Hora de Entrada');
+                    const exitRecord = records.find((record) => record.timetype === 'Hora De Salida');
 
-                        const entryRecord = groupedData[day].find(record => {
-                            return record.timetype === 'Hora de Entrada';
-                        });
-                        const exitRecord = groupedData[day].find(record => {
-                            return record.timetype === 'Hora De Salida';
-                        });
+                    let totalHours = 'No calculado';
+                    let overtime = 'No calculado';
 
-
+                    if (entryRecord || exitRecord) {
                         if (entryRecord && exitRecord) {
+
                             const entryTimestamp = entryRecord.timestamp;
                             const exitTimestamp = exitRecord.timestamp;
 
-                            const diffMillis = exitTimestamp - entryTimestamp;
-                            const diffHours = Math.floor(diffMillis / (1000 * 60 * 60));
-                            const diffMinutes = Math.floor((diffMillis % (1000 * 60 * 60)) / (1000 * 60));
-                            const overtimeHours = Math.max(0, diffHours - 8); // Calculate overtime hours
-                            const overtimeMinutes = (overtimeHours - Math.floor(overtimeHours)) * 60;
-
-
-                            calculatedData.push({
-                                day,
-                                entry: entryTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                exit: exitTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                totalHours: `${diffHours} hrs ${diffMinutes} mins`,
-                                overtime: `${Math.floor(overtimeHours)} hrs ${overtimeMinutes.toFixed(0)} mins`,
-                            });
+                            const { workHours, overtime: overtimeHours } = calculateWorkHours(entryTimestamp, exitTimestamp);
+                            totalHours = workHours;
+                            overtime = overtimeHours;
+                            // Formatear fechas y horas en formato deseado
+                            entryRecord.formattedTime = formatTimeWithAmPm(entryTimestamp);
+                            exitRecord.formattedTime = formatTimeWithAmPm(exitTimestamp);
                         } else {
-                            if (entryRecord) {
-                                calculatedData.push({
-                                    day,
-                                    entry: entryRecord.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                    exit: 'No marcó hora de salida',
-                                    totalHours: 'N/A',
-                                });
-                            } else if (exitRecord) {
-                                calculatedData.push({
-                                    day,
-                                    entry: 'No marcó hora de entrada',
-                                    exit: exitRecord.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                    totalHours: 'N/A',
-                                });
-                            } else {
-                                calculatedData.push({
-                                    day,
-                                    entry: 'No marcó hora de entrada',
-                                    exit: 'No marcó hora de salida',
-                                    totalHours: 'N/A',
-                                });
+                            if (!entryRecord) {
+                                totalHours = 'No marcó Hora de Entrada';
+                            }
+                            if (!exitRecord) {
+                                totalHours = 'No marcó Hora De Salida';
                             }
                         }
+
+                        // Calcula formattedDate, dayOfWeek y formattedTime
+                        const entryTimestamp = entryRecord ? entryRecord.timestamp : null;
+                        const exitTimestamp = exitRecord ? exitRecord.timestamp : null;
+
+                        const dayOfWeek = entryTimestamp ? getSpanishDayOfWeek(entryTimestamp) : exitTimestamp ? getSpanishDayOfWeek(exitTimestamp) : 'No disponible';
+                        const formattedTime = entryTimestamp ? formatTimeWithAmPm(entryTimestamp) : exitTimestamp ? formatTimeWithAmPm(exitTimestamp) : 'No disponible';
+
+                        return {
+                            day,
+                            entry: entryRecord ? entryRecord.formattedTime : 'No marcada',
+                            exit: exitRecord ? exitRecord.formattedTime : 'No marcada',
+                            totalHours,
+                            overtime,
+                            dayOfWeek,
+                            formattedTime,
+                        };
+                    } else {
+                        return {
+                            day,
+                            entry: 'No marcada',
+                            exit: 'No marcada',
+                            totalHours,
+                            overtime,
+                            dayOfWeek: 'No disponible',
+                            formattedTime: 'No disponible',
+                        };
                     }
-                }
-                setUserTimerData(calculatedData);
+                });
+
+
+                setUserTimerData(userTimerData);
             } catch (error) {
                 console.error('Error fetching userTimer data:', error);
             }
@@ -136,7 +124,7 @@ const UserDetail = () => {
         fetchUserData();
         fetchUserTimerData();
     }, [id]);
-    console.log('data', userTimerData)
+    // console.log('data', userTimerData)
 
     return (
         <Layout>
@@ -144,6 +132,9 @@ const UserDetail = () => {
                 Volver
             </Link>
             <h1>Detalles del Usuario: {id}</h1>
+            <span>{userData.name}</span>
+            <td>{userData.lastname}</td>
+            <td>{userData.email}</td>
             <table>
                 <thead>
                     <tr>
@@ -151,6 +142,7 @@ const UserDetail = () => {
                         <th>Apellido</th>
                         <th>Email</th>
                         <th>Fecha</th>
+                        <th>Dia</th>
                         <th>Hora de Entrada</th>
                         <th>Hora de Salida</th>
                         <th>Total horas</th>
@@ -164,10 +156,10 @@ const UserDetail = () => {
                             <td>{userData.lastname}</td>
                             <td>{userData.email}</td>
                             <td>{data.day}</td>
-                            <td>{data.entry}</td>
+                            <td>{data.dayOfWeek}</td>
+                            <td>{data.formattedTime}</td>
                             <td>{data.exit}</td>
                             <td>{data.totalHours}</td>
-
                             <td>{data.overtime}</td>
                         </tr>
                     ))}
