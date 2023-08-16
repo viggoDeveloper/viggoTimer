@@ -112,9 +112,6 @@ const UserTimerData = ({ userId }) => {
 
 // ... (import statements and component declaration)
 
-import React, { useEffect, useState } from 'react';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
 
 const UserTimerDataa = ({ userId }) => {
   const [userData, setUserData] = useState({});

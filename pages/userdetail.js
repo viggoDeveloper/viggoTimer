@@ -11,6 +11,8 @@ const UserDetail = () => {
     const { id } = router.query;
     const [userData, setUserData] = useState({});
     const [userTimerData, setUserTimerData] = useState([]);
+    const [groupedData, setGroupedData] = useState({});
+
 
     const { usuario, firebase } = useContext(FirebaseContext);
 
@@ -40,25 +42,30 @@ const UserDetail = () => {
                         .orderBy('hour', 'desc')
                         .get();
 
-                const groupedData = {};
+                //const groupedData = {};
+                const newGroupedData = {};
+
                 snapshot.docs.forEach((doc) => {
                     const data = doc.data();
                     const timestamp = data.hour;
                     const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
                     const day = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
-                    if (!groupedData[day]) {
-                        groupedData[day] = [];
+                    if (!newGroupedData[day]) {
+                        newGroupedData[day] = [];
                     }
 
-                    groupedData[day].push({
+                    newGroupedData[day].push({
                         timetype: data.timetype,
                         timestamp: date,
                         formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     });
                 });
+                setGroupedData(newGroupedData)
 
-                const userTimerData = Object.entries(groupedData).map(([day, records]) => {
+                //console.log('groupedData', groupedData)
+
+                const userTimerData = Object.entries(newGroupedData).map(([day, records]) => {
                     const entryRecord = records.find((record) => record.timetype === 'Hora de Entrada');
                     const exitRecord = records.find((record) => record.timetype === 'Hora De Salida');
 
@@ -123,7 +130,7 @@ const UserDetail = () => {
         };
         fetchUserData();
         fetchUserTimerData();
-    }, [id]);
+    }, [id, firebase]);
     // console.log('data', userTimerData)
 
     return (

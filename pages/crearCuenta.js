@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { css } from "@emotion/react";
-import Router, { useRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import Layout from "@/components/Layout/Layout";
 import { FirebaseContext } from "@/firebase";
 import { Select } from "@/components/ui/Select";
@@ -26,9 +26,11 @@ const STATE_INICIAL = {
 	cargo: ''
 }
 
-const crearCuenta = () => {
 
+function CrearCuenta  ()  {
 	const router = useRouter();
+
+
 	const { usuario, firebase } = useContext(FirebaseContext);
 
 	const [selectedCity, setSelectedCity] = useState('');
@@ -81,7 +83,7 @@ const crearCuenta = () => {
 			await firebase.registrar(nombre, email, password, apellido, document, selectedCity, cargo, telefono, selectSede, selectMarca, selectRol);
 
 			alert('Usuario Creado...')
-	
+
 		} catch (error) {
 			console.error('Hubo un error al crear el usuario ', error.message);
 			guardarError(error.message);
@@ -287,4 +289,4 @@ const crearCuenta = () => {
 	)
 }
 
-export default crearCuenta;
+export default CrearCuenta;

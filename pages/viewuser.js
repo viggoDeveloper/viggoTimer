@@ -27,7 +27,7 @@ const Usuarios = () => {
             setFilteredData(newData);
         });
         return () => unsubscribe();
-    }, []);
+    }, [firebase]);
 
     useEffect(() => {
         // Filtrar los datos en función del valor ingresado por el usuario
@@ -40,7 +40,7 @@ const Usuarios = () => {
         });
 
         setFilteredData(filtered);
-    }, [filterValue, data]);
+    }, [filterValue, data, firebase]);
 
     const handleSearch = () => {
         if (searchCedula) {

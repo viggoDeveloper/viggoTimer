@@ -81,7 +81,7 @@ const UserDetail = () => {
             }
         }
         fetchUserById()
-    }, [id]);
+    }, [id, firebase]);
     console.log('data', userTimerData)
 
 

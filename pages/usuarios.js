@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useRouter } from 'next/router';
 import Layout from "../components/Layout/Layout";
 import Link from "next/link";
 import { FirebaseContext } from '@/firebase';
-import Router, { useRouter } from 'next/router';
 import FirebaseExcelDownloadButton from "./descargarInforme";
-import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
+//import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
 
-const Usuarios = () => {
-
+function Usuarios() {
     const [data, setData] = useState([]);
     const [filterValue, setFilterValue] = useState('');
     const [filteredData, setFilteredData] = useState([]);
@@ -33,8 +32,13 @@ const Usuarios = () => {
             setData(newData);
             setFilteredData(newData);
         });
+
+        if (!usuario) {
+            router.push('/');
+        }
+
         return () => unsubscribe();
-    }, []);
+    }, [firebase, usuario]);
     //console.log(data)
 
     useEffect(() => {
@@ -48,11 +52,7 @@ const Usuarios = () => {
         });
 
         setFilteredData(filtered);
-    }, [filterValue, data]);
-
-    if (!usuario) {
-        return router.push('/');
-    }
+    }, [filterValue, data, firebase]);
 
     return (
         <div>
@@ -103,34 +103,3 @@ const Usuarios = () => {
 };
 
 export default Usuarios;
-
-
-// {filteredData.map((item) => {
-
-//     const seconds = item.hour.seconds;
-//     const nanoseconds = item.hour.nanoseconds;
-
-//     const createdTime = new Date(seconds * 1000 + nanoseconds / 1000000);
-
-//     //console.log('createdTime', createdTime)
-
-//     return (
-//         <tr key={item.id}>
-//             <td>{item.name}</td>
-//             <td>{item.lastname}</td>
-//             <td>{item.document}</td>
-//             <td>{item.email}</td>
-//             <td>{item.city}</td>
-//             <td>{item.brand}</td>
-//             <td>{item.campus}</td>
-//             <td>{item.reason}</td>
-//             <td>{item.phone}</td>
-//             <td>{item.timetype}</td>
-//             <td>{createdTime.toLocaleString()}</td>
-//             <td>
-
-//                 {/* <ImageZoom imageUrl={item.photoCheck} alt="Imagen 1" /> */}
-//             </td>
-//         </tr>
-//     )
-// })}

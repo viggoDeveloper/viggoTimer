@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Layout from '@/components/Layout/Layout';
 
 // Importa las funciones aquí
-import { formatDate, getSpanishDayOfWeek, formatTimeWithAmPm } from './path-hacia-tus-funciones';
+//import { formatDate, getSpanishDayOfWeek, formatTimeWithAmPm } from './path-hacia-tus-funciones';
 
 const UserDetail = () => {
     const router = useRouter();
