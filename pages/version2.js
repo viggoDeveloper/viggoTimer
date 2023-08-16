@@ -62,23 +62,18 @@ const UserDetail = () => {
                 });
                 setGroupedData(newGroupedData)
 
-                //console.log('groupedData', groupedData)
-
                 const userTimerData = Object.entries(newGroupedData).map(([day, records]) => {
                     const entryRecord = records.find((record) => record.timetype === 'Hora de Entrada');
                     const exitRecord = records.find((record) => record.timetype === 'Hora De Salida');
 
                     let totalHours = 'No calculado';
                     let overtime = 'No calculado';
-                    let lunchDuration = {};
 
                     if (entryRecord || exitRecord) {
                         if (entryRecord && exitRecord) {
 
                             const entryTimestamp = entryRecord.timestamp;
                             const exitTimestamp = exitRecord.timestamp;
-
-                            //console.log({timerLunch})
 
                             const { workHours, overtime: overtimeHours } = calculateWorkHours(entryTimestamp, exitTimestamp);
                             totalHours = workHours;
@@ -111,14 +106,14 @@ const UserDetail = () => {
                             const lunchStart = lunchRecords.find((record) => record.timetype === 'Hora Salida Almuerzo').timestamp;
                             const lunchEnd = lunchRecords.find((record) => record.timetype === 'Hora Fin Almuerzo').timestamp;
 
-                            lunchDuration = calculateDuration(lunchStart, lunchEnd);
-
+                            const lunchDuration = calculateDuration(lunchStart, lunchEnd);
                             // Formatea el tiempo de almuerzo en horas y minutos
                             lunchTime = `${lunchDuration.hours} horas ${lunchDuration.minutes.toFixed(0)} minutos`;
                         } else if (lunchRecords.length === 1) {
                             const lunchRecord = lunchRecords[0];
                             lunchTime = lunchRecord.timetype === 'Hora Salida Almuerzo' ? 'No marcó Hora Fin Almuerzo' : 'No marcó Hora Salida Almuerzo';
                         }
+
                         return {
                             day,
                             entry: entryRecord ? entryRecord.formattedTime : 'No marcada',
