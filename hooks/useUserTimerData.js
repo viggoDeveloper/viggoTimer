@@ -1,9 +1,4 @@
-
-
-//import { calculateDuration, calculateWorkHours, getSpanishDayOfWeek, formatTimeWithAmPm } from '@'
-
 import { calculateDuration, calculateWorkHours, getSpanishDayOfWeek, formatTimeWithAmPm } from "./helpers";
-
 
 export const processUserTimerDataForDay = (day, records) => {
     const entryRecord = records.find((record) => record.timetype === 'Hora de Entrada');
@@ -15,7 +10,6 @@ export const processUserTimerDataForDay = (day, records) => {
 
     if (entryRecord || exitRecord) {
         if (entryRecord && exitRecord) {
-
             const entryTimestamp = entryRecord.timestamp;
             const exitTimestamp = exitRecord.timestamp;
 
@@ -50,6 +44,8 @@ export const processUserTimerDataForDay = (day, records) => {
             const lunchEnd = lunchRecords.find((record) => record.timetype === 'Hora Fin Almuerzo').timestamp;
 
             lunchDuration = calculateDuration(lunchStart, lunchEnd);
+
+            console.log({lunchDuration})
 
             // Formatea el tiempo de almuerzo en horas y minutos
             lunchTime = `${lunchDuration.hours} horas ${lunchDuration.minutes.toFixed(0)} minutos`;

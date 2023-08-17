@@ -33,12 +33,11 @@ const UserDetail = () => {
                 const db = firebase.queryCollection();
                 const userRefCollection = db.collection('timeUser');
                 const userRef = db.collection('users').doc(id);
-                const snapshot =
-                    await userRefCollection
-                        .where('idUser', '==', userRef)
-                        .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
-                        .orderBy('hour', 'desc')
-                        .get();
+                const snapshot = await userRefCollection
+                    .where('idUser', '==', userRef)
+                    .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
+                    .orderBy('hour', 'desc')
+                    .get();
 
                 //const groupedData = {};
                 const newGroupedData = {};
