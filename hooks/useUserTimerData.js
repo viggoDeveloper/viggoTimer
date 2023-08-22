@@ -1,22 +1,40 @@
-import { calculateDuration, calculateWorkHours, getSpanishDayOfWeek, formatTimeWithAmPm } from "./helpers";
+import { calculateDuration, calculateOvertime, calculateWorkHours, getSpanishDayOfWeek, formatTimeWithAmPm } from "./helpers";
 
 export const processUserTimerDataForDay = (day, records) => {
     const entryRecord = records.find((record) => record.timetype === 'Hora de Entrada');
     const exitRecord = records.find((record) => record.timetype === 'Hora De Salida');
+    const lunchStartRecord = records.find((record) => record.timetype === 'Hora Salida Almuerzo');
+    const lunchEndRecord = records.find((record) => record.timetype === 'Hora Fin Almuerzo');
 
     let totalHours = 'No calculado';
     let overtime = 'No calculado';
+    let lunchTime = 'No calculado';
     let lunchDuration = {};
+    let calculateWork = {};
 
     if (entryRecord || exitRecord) {
+        if (lunchStartRecord && lunchEndRecord) {
+            const lunchStart = lunchStartRecord.timestamp;
+            const lunchEnd = lunchEndRecord.timestamp;
+
+            lunchDuration = calculateDuration(lunchStart, lunchEnd);
+            lunchTime = `${lunchDuration.hours} horas ${lunchDuration.minutes.toFixed(0)} minutos`;
+        } else if (!lunchStartRecord && !lunchEndRecord) {
+            lunchTime = 'No marcó tiempo de almuerzo';
+        }
+
         if (entryRecord && exitRecord) {
             const entryTimestamp = entryRecord.timestamp;
             const exitTimestamp = exitRecord.timestamp;
 
-            const { workHours } = calculateWorkHours(entryTimestamp, exitTimestamp);
-            totalHours = workHours;
-            // console.log({workHours})
-            //overtime = overtimeHours;
+            calculateWork = calculateWorkHours(entryTimestamp, exitTimestamp, lunchDuration);
+            console.log('calculateWork', calculateWork)
+
+            if (calculateWork.hours === 'No calculado') {
+                totalHours = calculateWork.hours;
+            } else {
+                totalHours = `${calculateWork.hours} horas ${calculateWork.minutes.toFixed(0)} minutos`;
+            }
             exitRecord.formattedTime = formatTimeWithAmPm(exitTimestamp);
         } else {
             if (!entryRecord) {
@@ -26,33 +44,17 @@ export const processUserTimerDataForDay = (day, records) => {
                 totalHours = 'No marcó Hora De Salida';
             }
         }
-        // Calcula formattedDate, dayOfWeek y formattedTime
+
+        let overtimer = calculateOvertime(calculateWork, lunchDuration);
+        console.log('over', overtimer)
+        overtime = `${overtimer.hours} horas ${overtimer.minutes.toFixed(0)} minutos`;
+
         const entryTimestamp = entryRecord ? entryRecord.timestamp : null;
         const exitTimestamp = exitRecord ? exitRecord.timestamp : null;
 
         const dayOfWeek = entryTimestamp ? getSpanishDayOfWeek(entryTimestamp) : exitTimestamp ? getSpanishDayOfWeek(exitTimestamp) : 'No disponible';
         const formattedTime = entryTimestamp ? formatTimeWithAmPm(entryTimestamp) : exitTimestamp ? formatTimeWithAmPm(exitTimestamp) : 'No disponible';
 
-        const lunchRecords = records.filter(
-            (record) => record.timetype === 'Hora Salida Almuerzo' || record.timetype === 'Hora Fin Almuerzo'
-        );
-
-        let lunchTime = 'No calculado';
-
-        if (lunchRecords.length === 2) {
-            const lunchStart = lunchRecords.find((record) => record.timetype === 'Hora Salida Almuerzo').timestamp;
-            const lunchEnd = lunchRecords.find((record) => record.timetype === 'Hora Fin Almuerzo').timestamp;
-
-            lunchDuration = calculateDuration(lunchStart, lunchEnd);
-
-            console.log({lunchDuration})
-
-            // Formatea el tiempo de almuerzo en horas y minutos
-            lunchTime = `${lunchDuration.hours} horas ${lunchDuration.minutes.toFixed(0)} minutos`;
-        } else if (lunchRecords.length === 1) {
-            const lunchRecord = lunchRecords[0];
-            lunchTime = lunchRecord.timetype === 'Hora Salida Almuerzo' ? 'No marcó Hora Fin Almuerzo' : 'No marcó Hora Salida Almuerzo';
-        }
         return {
             day,
             entry: entryRecord ? entryRecord.formattedTime : 'No marcada',
@@ -75,4 +77,4 @@ export const processUserTimerDataForDay = (day, records) => {
             lunchTime
         };
     }
-}
+};

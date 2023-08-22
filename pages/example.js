@@ -1,44 +1,56 @@
-// Definir las horas regulares trabajadas por día
-const horasRegulares = {
-  lunes: 9,
-  martes: 9,
-  miercoles: 9,
-  jueves: 9,
-  viernes: 9,
-  sabado: 6
+export const calculateWorkHours = (entryTimestamp, exitTimestamp, lunchDuration) => {
+    if (!entryTimestamp || !exitTimestamp) {
+        return {
+            hours: NaN,
+            minutes: NaN,
+        };
+    }
+
+    let workMinutes;
+
+    if (lunchDuration) {
+        const diffMillis = exitTimestamp - entryTimestamp;
+        const totalMinutes = diffMillis / (1000 * 60);
+
+        workMinutes = totalMinutes - (lunchDuration.hours * 60 + lunchDuration.minutes);
+    } else {
+        workMinutes = (exitTimestamp - entryTimestamp) / (1000 * 60);
+    }
+
+    const workHours = Math.floor(workMinutes / 60);
+    const workMinutesRemaining = Math.round(workMinutes % 60);
+
+    return {
+        hours: workHours,
+        minutes: workMinutesRemaining,
+    };
 };
 
-// Definir las horas extras trabajadas por día
-const horasExtras = {
-  sabado: 3 // En la primera semana
+export const calculateOvertime = (workHours, lunchDuration) => {
+    const standardWorkHours = 8; // Jornada laboral estándar en horas
+
+    if (isNaN(workHours) || isNaN(lunchDuration.hours) || isNaN(lunchDuration.minutes)) {
+        return {
+            hours: NaN,
+            minutes: NaN,
+        };
+    }
+
+    const totalWorkMinutes = workHours * 60 + lunchDuration.hours * 60 + lunchDuration.minutes;
+    const overtimeMinutes = totalWorkMinutes - standardWorkHours * 60;
+
+    if (overtimeMinutes < 0) {
+        return {
+            hours: 0,
+            minutes: 0,
+        };
+    }
+
+    const overtimeHours = Math.floor(overtimeMinutes / 60);
+    const overtimeMinutesRemaining = Math.round(overtimeMinutes % 60);
+
+    return {
+        hours: overtimeHours,
+        minutes: overtimeMinutesRemaining,
+    };
 };
-
-// Calcular horas regulares y extras para la primera semana
-let totalHorasRegulares = 0;
-let totalHorasExtras = 0;
-
-for (const dia in horasRegulares) {
-  totalHorasRegulares += horasRegulares[dia];
-  if (horasExtras[dia]) {
-    totalHorasExtras += horasExtras[dia];
-  }
-}
-
-// Calcular horas regulares y extras para la segunda semana
-// Modifica las horas extras para el segundo sábado
-horasExtras.sabado = 2; // En la segunda semana
-
-for (const dia in horasRegulares) {
-  totalHorasRegulares += horasRegulares[dia];
-  if (horasExtras[dia]) {
-    totalHorasExtras += horasExtras[dia];
-  }
-}
-
-// Calcular el total de horas de trabajo
-const totalHorasTrabajo = totalHorasRegulares + totalHorasExtras;
-
-// Imprimir resultados
-console.log(`Total de horas regulares: ${totalHorasRegulares}`);
-console.log(`Total de horas extras: ${totalHorasExtras}`);
-console.log(`Total de horas de trabajo: ${totalHorasTrabajo}`);
