@@ -12,10 +12,6 @@ function useAutenticacion() {
                 const userRefCollection = db.collection('users').doc(user.uid);
                 const userDoc = await userRefCollection.get();
                 const userData = userDoc.data();
-
-                console.log('======useAutenticacion=========')
-                console.log(userData)
-
                 const tieneRolSuperAdmin = userData.userRol === "SuperAdmin";
                 guardarUsuarioAutenticado({
                     usuario: user,

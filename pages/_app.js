@@ -3,6 +3,7 @@ import App from 'next/app';
 import firebase, { FirebaseContext } from '../firebase';
 import useAutenticacion from '@/hooks/useAutenticacion';
 import Router from 'next/router';
+import { useFirebaseContext } from '@/firebase/context';
 
 const MyApp = props => {
 
@@ -29,7 +30,7 @@ const MyApp = props => {
             value={{
                 firebase,
                 usuario: esSuperAdmin ? usuario?.usuario : null,
-                userData: usuario?.userData
+                userData: usuario?.userData,
             }}
         >
             <Component {...pageProps} />

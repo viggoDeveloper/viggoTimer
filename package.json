@@ -17,6 +17,7 @@
     "babel-plugin-emotion": "^11.0.0",
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.13",
+    "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
     "firebase": "8.9",
     "firebase-admin": "^11.10.1",

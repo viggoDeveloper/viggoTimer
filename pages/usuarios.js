@@ -4,6 +4,8 @@ import Layout from "../components/Layout/Layout";
 import Link from "next/link";
 import { FirebaseContext } from '@/firebase';
 import FirebaseExcelDownloadButton from "./descargarInforme";
+//import generateExcelReport from './example';
+
 //import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
 
 function Usuarios() {
@@ -20,7 +22,6 @@ function Usuarios() {
     };
 
     const { usuario, firebase } = useContext(FirebaseContext);
-
 
     const router = useRouter();
 
@@ -55,12 +56,12 @@ function Usuarios() {
         setFilteredData(filtered);
     }, [filterValue, data, firebase]);
 
+    //<FirebaseExcelDownloadButton />
+
     return (
         <div>
             <Layout>
                 <h1>Desde usuarios</h1>
-                <FirebaseExcelDownloadButton />
-
                 <table>
                     <thead>
                         <tr>

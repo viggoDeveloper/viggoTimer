@@ -4,6 +4,9 @@ import { FirebaseContext } from '@/firebase';
 import Link from 'next/link';
 import Layout from '@/components/Layout/Layout';
 import { processUserTimerDataForDay } from '@/hooks/useUserTimerData';
+import { guardarRegistrosEnFirebase } from '@/hooks/helpers';
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
 const UserDetail = () => {
     const router = useRouter();
@@ -13,11 +16,11 @@ const UserDetail = () => {
     const [groupedData, setGroupedData] = useState({});
 
     const { usuario, firebase } = useContext(FirebaseContext);
+    const db = firebase.queryCollection();
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const db = firebase.queryCollection();
                 const userRefCollection = db.collection('users').doc(id);
                 const userDoc = await userRefCollection.get();
                 if (userDoc.exists) {
@@ -69,10 +72,15 @@ const UserDetail = () => {
                 console.error('Error fetching userTimer data:', error);
             }
         };
+        //guardarRegistrosEnFirebase(id, userTimerData);
         fetchUserData();
         fetchUserTimerData();
     }, [id, firebase]);
-    console.log('data', userTimerData)
+
+    useEffect(() => {
+        guardarRegistrosEnFirebase(db, id, userTimerData);
+    }, [id, userTimerData]);
+    //console.log('data', userTimerData)
 
     return (
         <Layout>
