@@ -79,15 +79,8 @@ function calculateOvertime(totalWorkHours, lunchDuration) {
 };
 
 const guardarRegistrosEnFirebase = async (db, userId, registros) => {
-    console.log('userId', userId)
-    console.log('registros', registros)
-    console.log('db', db)
-
-
     try {
-       
         const userDetailsRef = db.collection('userDetails').doc(userId);
-
         // Verificar si el documento userDetails ya existe
         const userDetailsDoc = await userDetailsRef.get();
 
@@ -98,7 +91,6 @@ const guardarRegistrosEnFirebase = async (db, userId, registros) => {
             // Crear la subcolección 'registros' dentro de userDetails
             await userDetailsRef.collection('registros').doc('placeholder').set({});
         }
-
         // Obtener la referencia a la subcolección 'registros' dentro de userDetails
         const registrosCollectionRef = userDetailsRef.collection('registros');
 
@@ -106,9 +98,6 @@ const guardarRegistrosEnFirebase = async (db, userId, registros) => {
         const dayKey = today.toISOString().substring(0, 10); // Formato YYYY-MM-DD
 
         const existingRecord = await registrosCollectionRef.doc(dayKey).get();
-
-        // Agregar tiempo de espera de 20 segundos
-        await new Promise(resolve => setTimeout(resolve, 10000));
 
         if (existingRecord.exists) {
             // Si el registro ya existe, actualiza los datos

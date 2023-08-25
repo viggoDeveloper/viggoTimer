@@ -68,19 +68,15 @@ const UserDetail = () => {
                 );
 
                 setUserTimerData(processedData);
+
+                guardarRegistrosEnFirebase(db, id, processedData);
             } catch (error) {
                 console.error('Error fetching userTimer data:', error);
             }
         };
-        //guardarRegistrosEnFirebase(id, userTimerData);
         fetchUserData();
         fetchUserTimerData();
     }, [id, firebase]);
-
-    useEffect(() => {
-        guardarRegistrosEnFirebase(db, id, userTimerData);
-    }, [id, userTimerData]);
-    //console.log('data', userTimerData)
 
     return (
         <Layout>
