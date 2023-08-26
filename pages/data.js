@@ -1,24 +1,96 @@
+// Obtener la lista de usuarios desde Firebase
+export const obtenerUsuarios = async (db) => {
+    try {
+        const usersCollection = db.collection('users');
+        const usersSnapshot = await usersCollection.get();
+
+        const usuarios = [];
+        usersSnapshot.forEach((doc) => {
+            const usuario = doc.data();
+            usuarios.push({ id: doc.id, ...usuario });
+        });
+
+        return usuarios;
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        return [];
+    }
+};
+// Obtener los registros de un usuario desde Firebase
+export const obtenerRegistrosUsuario = async (db, userId) => {
+    try {
+        const userDetailsRef = db.collection('userDetails').doc(userId);
+        const registrosCollectionRef = userDetailsRef.collection('registros');
+
+        const registrosSnapshot = await registrosCollectionRef.get();
+
+        const registros = [];
+        registrosSnapshot.forEach((doc) => {
+            const registro = doc.data();
+            registros.push({ id: doc.id, ...registro });
+        });
+
+        return registros;
+    } catch (error) {
+        console.error('Error al obtener registros de usuario:', error);
+        return [];
+    }
+};
+// Guardar registros en Firebase para todos los usuarios
+export const guardarRegistrosParaTodosLosUsuarios = async (db) => {
+    const usuarios = await obtenerUsuarios(db);
+
+    for (const usuario of usuarios) {
+        const registros = await obtenerRegistrosUsuario(db, usuario.id);
+        await guardarRegistrosEnFirebase(db, usuario.id, registros);
+    }
+};
+
+
+// Guardar registros en Firebase para un usuario
+export const guardarRegistrosEnFirebase = async (db, userId, registros) => {
+    try {
+        const userDetailsRef = db.collection('userDetails').doc(userId);
+        const registrosCollectionRef = userDetailsRef.collection('registros');
+
+        const today = new Date();
+        const dayKey = today.toISOString().substring(0, 10); // Formato YYYY-MM-DD
+
+        const existingRecord = await registrosCollectionRef.doc(dayKey).get();
+
+        if (existingRecord.exists) {
+            // Si el registro ya existe, actualiza los datos
+            await registrosCollectionRef.doc(dayKey).update({ registros });
+        } else {
+            // Si el registro no existe, crea uno nuevo
+            await registrosCollectionRef.doc(dayKey).set({ registros });
+        }
+
+        console.log(`Registros guardados exitosamente para el usuario ${userId}`);
+    } catch (error) {
+        console.error('Error al guardar registros:', error);
+    }
+};
+
 import React, { useState, useEffect, useContext } from 'react';
-import { useRouter } from 'next/router';
 import { FirebaseContext } from '@/firebase';
 import Link from 'next/link';
 import Layout from '@/components/Layout/Layout';
 import { processUserTimerDataForDay } from '@/hooks/useUserTimerData';
-import { guardarRegistrosEnFirebase } from '@/hooks/helpers';
+import { guardarRegistrosParaTodosLosUsuarios } from '@/hooks/helpers';
 
 const UserDetail = () => {
+    const { firebase } = useContext(FirebaseContext);
     const router = useRouter();
     const { id } = router.query;
     const [userData, setUserData] = useState({});
     const [userTimerData, setUserTimerData] = useState([]);
-    const [groupedData, setGroupedData] = useState({});
-
-    const { usuario, firebase } = useContext(FirebaseContext);
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const userRefCollection = firebase.db.collection('users').doc(id);
+                const db = firebase.firestore();
+                const userRefCollection = db.collection('users').doc(id);
                 const userDoc = await userRefCollection.get();
                 if (userDoc.exists) {
                     setUserData(userDoc.data());
@@ -29,93 +101,49 @@ const UserDetail = () => {
         };
 
         const fetchUserTimerData = async () => {
-            try {
-                const userRefCollection = firebase.db.collection('timeUser');
-                const userRef = firebase.db.collection('users').doc(id);
-                const snapshot = await userRefCollection
-                    .where('idUser', '==', userRef)
-                    .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
-                    .orderBy('hour', 'desc')
-                    .get();
-
-                const newGroupedData = {};
-
-                snapshot.docs.forEach((doc) => {
-                    const data = doc.data();
-                    const timestamp = data.hour;
-                    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-                    const day = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-                    if (!newGroupedData[day]) {
-                        newGroupedData[day] = [];
-                    }
-
-                    newGroupedData[day].push({
-                        timetype: data.timetype,
-                        timestamp: date,
-                        formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    });
-                });
-                setGroupedData(newGroupedData)
-
-                const processedData = Object.entries(newGroupedData).map(([day, records]) =>
-                    processUserTimerDataForDay(day, records)
-                );
-
-                setUserTimerData(processedData);
-
-                // Automatizar la tarea de guardar registros
-                guardarRegistrosEnFirebase(firebase.db, id, processedData);
-            } catch (error) {
-                console.error('Error fetching userTimer data:', error);
-            }
+            // ... (tu código existente para obtener registros de usuario)
         };
+
+        const guardarRegistrosUsuario = async () => {
+            const db = firebase.firestore();
+            const registros = await obtenerRegistrosUsuario(db, id);
+            await guardarRegistrosEnFirebase(db, id, registros);
+        };
+
+        // Automatizar el proceso de guardar registros para todos los usuarios cada 20 segundos
+        const intervalId = setInterval(async () => {
+            await guardarRegistrosParaTodosLosUsuarios(firebase.firestore());
+            console.log('Registros guardados para todos los usuarios.');
+        }, 20000); // 20 segundos
+
+        // Detener el intervalo al desmontar el componente
+        return () => clearInterval(intervalId);
 
         fetchUserData();
         fetchUserTimerData();
     }, [id, firebase]);
 
+    // ... (código para renderizar la interfaz del usuario)
+
     return (
         <Layout>
-            <Link href="/usuarios">
-                Volver
-            </Link>
+            <Link href="/usuarios">Volver</Link>
             <h1>Detalles del Usuario: {id}</h1>
             <span>{userData.name}</span>
-            <td>{userData.lastname}</td>
-            <td>{userData.email}</td>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Fecha</th>
-                        <th>Dia</th>
-                        <th>Hora de Entrada</th>
-                        <th>Hora de Salida</th>
-                        <th>Tiempo de Almuerzo</th>
-                        <th>Total horas</th>
-                        <th>Horas extras</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {userTimerData.map((data, index) => (
-                        <tr key={index}>
-                            <td>{userData.name}</td>
-                            <td>{userData.lastname}</td>
-                            <td>{data.day}</td>
-                            <td>{data.dayOfWeek}</td>
-                            <td>{data.formattedTime}</td>
-                            <td>{data.exit}</td>
-                            <td>{data.lunchTime}</td>
-                            <td>{data.totalHours}</td>
-                            <td>{data.overtime}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            {/* ... (código para renderizar la tabla de registros) */}
         </Layout>
     );
 };
 
 export default UserDetail;
+
+
+    // guardarRegistrosEnFirebase(db, id, processedData);
+                // Intervalo para automatizar el guardado cada 5 minutos
+                // const saveInterval = setInterval(() => {
+                //     guardarRegistrosEnFirebase(db, id, processedData);
+                // }, 2 * 60 * 1000); // 5 minutos
+
+                // return () => {
+                //     clearInterval(saveInterval); // Limpiar intervalo al desmontar componente
+                // };

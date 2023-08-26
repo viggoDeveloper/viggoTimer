@@ -1,92 +1,129 @@
-import React from 'react';
-import ExcelJS from 'exceljs';
+import React, { useState, useEffect, useContext } from 'react';
+import { useRouter } from 'next/router';
+import { FirebaseContext } from '@/firebase';
+import Link from 'next/link';
+import Layout from '@/components/Layout/Layout';
+import { processUserTimerDataForDay } from '@/hooks/useUserTimerData';
+import { guardarRegistrosEnFirebase } from '@/hooks/helpers';
+import { guardarRegistrosParaTodosLosUsuarios } from '@/hooks/helpers';
 
-const generateExcelReport = async (userData, userTimerData) => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Report');
+const UserDetail = () => {
+    const router = useRouter();
+    const { id } = router.query;
+    const [userData, setUserData] = useState({});
+    const [userTimerData, setUserTimerData] = useState([]);
+    const [groupedData, setGroupedData] = useState({});
 
-    // Agrega los datos del usuario en la primera fila
-    worksheet.addRow(['Nombre', 'Apellido', 'Email']);
-    worksheet.addRow([userData.name, userData.lastname, userData.email]);
-    worksheet.addRow([]); // Agrega una fila vacía
+    const { usuario, firebase } = useContext(FirebaseContext);
+    const db = firebase.queryCollection();
 
-    // Agrega los encabezados de las columnas de datos del reporte
-    worksheet.addRow(['Fecha', 'Día', 'Hora de Entrada', 'Hora de Salida', 'Tiempo de Almuerzo', 'Total horas', 'Horas extras']);
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userRefCollection = db.collection('users').doc(id);
+                const userDoc = await userRefCollection.get();
+                if (userDoc.exists) {
+                    setUserData(userDoc.data());
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
 
-    // Agrega los datos de cada día
-    userTimerData.forEach(data => {
-        worksheet.addRow([
-            data.day,
-            data.dayOfWeek,
-            data.entry,
-            data.exit,
-            data.lunchTime,
-            data.totalHours,
-            data.overtime
-        ]);
-    });
+        const fetchUserTimerData = async () => {
+            try {
+                const db = firebase.queryCollection();
+                const userRefCollection = db.collection('timeUser');
+                const userRef = db.collection('users').doc(id);
+                const snapshot = await userRefCollection
+                    .where('idUser', '==', userRef)
+                    .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
+                    .orderBy('hour', 'desc')
+                    .get();
 
-    // Genera el archivo Excel
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'reporte.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
-};
+                const newGroupedData = {};
 
-const ReportButton = ({ userData, userTimerData }) => {
+                snapshot.docs.forEach((doc) => {
+                    const data = doc.data();
+                    const timestamp = data.hour;
+                    const date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+                    const day = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                    if (!newGroupedData[day]) {
+                        newGroupedData[day] = [];
+                    }
+
+                    newGroupedData[day].push({
+                        timetype: data.timetype,
+                        timestamp: date,
+                        formattedTime: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    });
+                });
+                setGroupedData(newGroupedData)
+                const processedData = Object.entries(newGroupedData).map(([day, records]) =>
+                    processUserTimerDataForDay(day, records)
+                );
+
+                setUserTimerData(processedData);
+            } catch (error) {
+                console.error('Error fetching userTimer data:', error);
+            }
+        };
+        fetchUserData();
+        fetchUserTimerData();
+
+        // Automatizar el proceso de guardar registros para todos los usuarios cada 20 segundos
+        const intervalId = setInterval(async () => {
+            await guardarRegistrosParaTodosLosUsuarios(firebase.firestore());
+            console.log('Registros guardados para todos los usuarios.');
+        }, 20000); // 20 segundos
+
+        // Detener el intervalo al desmontar el componente
+        return () => clearInterval(intervalId);
+
+    }, [id, firebase]);
+
     return (
-        <Button onClick={() => generateExcelReport(userData, userTimerData)}>
-            Generar Reporte Excel
-        </Button>
+        <Layout>
+            <Link href="/usuarios">
+                Volver
+            </Link>
+            <h1>Detalles del Usuario: {id}</h1>
+            <span>{userData.name}</span>
+            <td>{userData.lastname}</td>
+            <td>{userData.email}</td>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Fecha</th>
+                        <th>Dia</th>
+                        <th>Hora de Entrada</th>
+                        <th>Hora de Salida</th>
+                        <th>Tiempo de Almuerzo</th>
+                        <th>Total horas</th>
+                        <th>Horas extras</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {userTimerData.map((data, index) => (
+                        <tr key={index}>
+                            <td>{userData.name}</td>
+                            <td>{userData.lastname}</td>
+                            <td>{data.day}</td>
+                            <td>{data.dayOfWeek}</td>
+                            <td>{data.formattedTime}</td>
+                            <td>{data.exit}</td>
+                            <td>{data.lunchTime}</td>
+                            <td>{data.totalHours}</td>
+                            <td>{data.overtime}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </Layout>
     );
 };
 
-//export default ReportButton;
-
-
-// components/FirebaseExcelDownloadButton.js
-
-import React, { useState } from 'react';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import { saveAs } from 'file-saver';
-import { BotonDownload } from '@/components/ui/Boton';
-
-const FirebaseExcelDownloadButton = () => {
-    const [data, setData] = useState([]);
-
-    const downloadExcel = async () => {
-        const collectionRef = firebase.firestore().collection('timeUser');
-
-        try {
-            const snapshot = await collectionRef.get();
-            const data = snapshot.docs.map((doc) => doc.data());
-            setData(data);
-
-            // Crear el contenido del archivo CSV
-            const csvContent = [
-                'documento,nombre,apellido,correo,cargo,telefono,sede,marca,ciudad', // Primera fila fija con los nombres de columna
-                ...data.map((row) => `${row.document},${row.name},${row.lastname},${row.email},${row.post},${row.phone},${row.campus},${row.brand},${row.city}`), // Datos de cada fila
-            ].join('\n');
-
-            // Crear y descargar el archivo CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, 'datos_de_la_coleccion.csv');
-        } catch (error) {
-            console.error('Error al descargar los datos:', error);
-        }
-    };
-
-    return (
-        <div>
-            <BotonDownload onClick={downloadExcel}>Descargar Excel</BotonDownload>
-        </div>
-    );
-};
-
-//export default FirebaseExcelDownloadButton;
-
+export default UserDetail;
