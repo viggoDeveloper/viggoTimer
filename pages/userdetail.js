@@ -4,8 +4,6 @@ import { FirebaseContext } from '@/firebase';
 import Link from 'next/link';
 import Layout from '@/components/Layout/Layout';
 import { processUserTimerDataForDay } from '@/hooks/useUserTimerData';
-// import { guardarRegistrosEnFirebase } from '@/hooks/helpers';
-// import { guardarRegistrosParaTodosLosUsuarios } from '@/hooks/helpers';
 
 const UserDetail = () => {
     const router = useRouter();
@@ -40,8 +38,6 @@ const UserDetail = () => {
                     .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
                     .orderBy('hour', 'desc')
                     .get();
-
-                //const groupedData = {};
                 const newGroupedData = {};
 
                 snapshot.docs.forEach((doc) => {
@@ -61,38 +57,18 @@ const UserDetail = () => {
                     });
                 });
                 setGroupedData(newGroupedData)
-                //console.log('groupedData', groupedData)
+
                 const processedData = Object.entries(newGroupedData).map(([day, records]) =>
                     processUserTimerDataForDay(day, records)
                 );
 
                 setUserTimerData(processedData);
-
-                // guardarRegistrosEnFirebase(db, id, processedData);
-                // Intervalo para automatizar el guardado cada 5 minutos
-                // const saveInterval = setInterval(() => {
-                //     guardarRegistrosEnFirebase(db, id, processedData);
-                // }, 2 * 60 * 1000); // 5 minutos
-
-                // return () => {
-                //     clearInterval(saveInterval); // Limpiar intervalo al desmontar componente
-                // };
             } catch (error) {
                 console.error('Error fetching userTimer data:', error);
             }
         };
         fetchUserData();
         fetchUserTimerData();
-
-        // Automatizar el proceso de guardar registros para todos los usuarios cada 20 segundos
-        // const intervalId = setInterval(async () => {
-        //     await guardarRegistrosParaTodosLosUsuarios(db);
-        //     console.log('Registros guardados para todos los usuarios.');
-        // }, 20000); // 20 segundos
-
-        // // Detener el intervalo al desmontar el componente
-        // return () => clearInterval(intervalId);
-
     }, [id, firebase, userTimerData]);
 
     return (

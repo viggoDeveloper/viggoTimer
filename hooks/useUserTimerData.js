@@ -46,7 +46,6 @@ export const processUserTimerDataForDay = (day, records) => {
         }
 
         let overtimer = calculateOvertime(calculateWork, lunchDuration);
-        //console.log('over', overtimer)
         overtime = `${overtimer.hours} horas ${overtimer.minutes.toFixed(0)} minutos`;
 
         const entryTimestamp = entryRecord ? entryRecord.timestamp : null;

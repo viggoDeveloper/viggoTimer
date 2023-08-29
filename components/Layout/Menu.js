@@ -43,13 +43,13 @@ const Menu = () => {
                         <BotonSide>Crear Cuenta</BotonSide>
                     </Link>
 
-                    <Link href="/data"
+                    <Link href="/viewuser"
                         css={css`
                         text-decoration: none;
                     `}
                     >
                         <BotonSide >
-                            Data
+                            Ver Todos
                         </BotonSide>
 
                     </Link>
