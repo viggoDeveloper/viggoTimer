@@ -13,11 +13,11 @@ const UserDetail = () => {
     const [groupedData, setGroupedData] = useState({});
 
     const { usuario, firebase } = useContext(FirebaseContext);
-    const db = firebase.queryCollection();
-
+    
     useEffect(() => {
         const fetchUserData = async () => {
             try {
+                const db = firebase.queryCollection();
                 const userRefCollection = db.collection('users').doc(id);
                 const userDoc = await userRefCollection.get();
                 if (userDoc.exists) {
