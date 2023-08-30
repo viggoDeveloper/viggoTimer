@@ -13,7 +13,7 @@ const UserDetail = () => {
     const [groupedData, setGroupedData] = useState({});
 
     const { usuario, firebase } = useContext(FirebaseContext);
-    
+
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -69,7 +69,7 @@ const UserDetail = () => {
         };
         fetchUserData();
         fetchUserTimerData();
-    }, [id, firebase, userTimerData]);
+    }, [id, firebase]);
 
     return (
         <Layout>
