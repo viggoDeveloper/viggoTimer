@@ -53,9 +53,9 @@ const Layout = ({ children }) => {
 
           table {
             position: absolute;
-            left: 25%;
-            width: 70%;
-            height: 60%;
+            left: 320px;
+            width: 80%;
+            height: 65%;
             display: block;
             overflow-x: auto;
             white-space: nowrap;
@@ -63,7 +63,8 @@ const Layout = ({ children }) => {
           
           th,
           td {
-            padding: 10px;
+            margin: 5px;
+            padding: 8px;
             background-color: rgba(255, 255, 255, 0.2);
             color: #000;
           }

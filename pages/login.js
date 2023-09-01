@@ -33,7 +33,7 @@ const Login = () => {
             const userData = userDoc.data();
 
             if (userData.userRol === "SuperAdmin") {
-                Router.push('/usuarios');
+                Router.push('/viewuser');
             } else {
                 setError("No tienes permisos para acceder.");
                 setIsLoading(false);

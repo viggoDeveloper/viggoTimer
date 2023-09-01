@@ -78,21 +78,18 @@ const Usuarios = () => {
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
                 />
-               
+
                 <table>
                     <thead>
                         <tr>
+                            <th>Fecha - Hora</th>
+                            <th>Horario</th>
                             <th>Nombre</th>
                             <th>Apellido</th>
                             <th>Documento</th>
-                            <th>Correo</th>
                             <th>Ciudad</th>
                             <th>Marca</th>
-                            <th>Sede</th>
                             <th>Motivo</th>
-                            <th>Telefono</th>
-                            <th>Horario</th>
-                            <th>Hora - Fecha</th>
                             <th>Foto</th>
                         </tr>
                     </thead>
@@ -110,20 +107,16 @@ const Usuarios = () => {
 
                             return (
                                 <tr key={item.id}>
+                                    <td>{createdTime.toLocaleString()}</td>
+                                    <td>{item.timetype}</td>
                                     <td>{item.name}</td>
                                     <td>{item.lastname}</td>
                                     <td>{item.document}</td>
-                                    <td>{item.email}</td>
                                     <td>{item.city}</td>
                                     <td>{item.brand}</td>
-                                    <td>{item.campus}</td>
                                     <td>{item.reason}</td>
-                                    <td>{item.phone}</td>
-                                    <td>{item.timetype}</td>
-                                    <td>{createdTime.toLocaleString()}</td>
                                     <td>
-
-                                        {/* <ImageZoom imageUrl={item.photoCheck} alt="Imagen 1" /> */}
+                                        <img src={item.photoCheck} width={30} height={30} />
                                     </td>
                                 </tr>
                             )
