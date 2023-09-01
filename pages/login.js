@@ -43,7 +43,6 @@ const Login = () => {
             console.error('Hubo un error al autenticar el usuario', error.message);
             setError(error.message);
             setIsLoading(false);
-
             // Redirigir a la página de login en caso de error
             Router.push('/login');    
         }

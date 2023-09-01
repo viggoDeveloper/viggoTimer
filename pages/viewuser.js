@@ -6,7 +6,6 @@ import FirebaseExcelDownloadButton from "./descargarInforme";
 import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
 
 const Usuarios = () => {
-
     const [data, setData] = useState([]);
     const [filterValue, setFilterValue] = useState('');
     const [filteredData, setFilteredData] = useState([]);
@@ -18,6 +17,9 @@ const Usuarios = () => {
     const router = useRouter();
 
     useEffect(() => {
+        if (!usuario) {
+            return router.push('/');
+        }
         const getDataUser = firebase.queryCollection();
         const collectionRef = getDataUser.collection('timeUser')
 
@@ -38,7 +40,6 @@ const Usuarios = () => {
                 item.lastname.toLowerCase().includes(filterValue.toLowerCase())
             );
         });
-
         setFilteredData(filtered);
     }, [filterValue, data, firebase]);
 
@@ -63,10 +64,6 @@ const Usuarios = () => {
         setFilteredData(data);
     };
 
-    // if (!usuario) {
-    //     return router.push('/');
-    // }
-
     return (
         <div>
             <Layout>
@@ -78,7 +75,6 @@ const Usuarios = () => {
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
                 />
-
                 <table>
                     <thead>
                         <tr>
@@ -90,20 +86,14 @@ const Usuarios = () => {
                             <th>Ciudad</th>
                             <th>Marca</th>
                             <th>Motivo</th>
-                            <th>Foto</th>
+                            {/* <th>Foto</th> */}
                         </tr>
                     </thead>
                     <tbody>
                         {filteredData.map((item) => {
-
-                            console.log(item)
-
                             const seconds = item.hour.seconds;
                             const nanoseconds = item.hour.nanoseconds;
-
                             const createdTime = new Date(seconds * 1000 + nanoseconds / 1000000);
-
-                            //console.log('createdTime', createdTime)
 
                             return (
                                 <tr key={item.id}>
@@ -115,9 +105,9 @@ const Usuarios = () => {
                                     <td>{item.city}</td>
                                     <td>{item.brand}</td>
                                     <td>{item.reason}</td>
-                                    <td>
+                                    {/* <td>
                                         <img src={item.photoCheck} width={30} height={30} />
-                                    </td>
+                                    </td> */}
                                 </tr>
                             )
                         })}
