@@ -117,7 +117,7 @@ const Usuarios = () => {
                                     <td>{item.brand}</td>
                                     <td>{item.reason}</td>
                                     <td>
-                                        <img src={item.photoCheck} width={30} height={30} />
+                                        <img src={item.photoCheck} width={30} height={30} loading="lazy" />
                                     </td>
                                 </tr>
                             )

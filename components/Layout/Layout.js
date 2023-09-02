@@ -110,7 +110,7 @@ const Layout = ({ children }) => {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 25%; /* Espacio entre la tabla y los botones de paginación */
+            margin-top: 35%; /* Espacio entre la tabla y los botones de paginación */
           }
           
           .pagination button {
