@@ -97,7 +97,7 @@ const Usuarios = () => {
                             <th>Ciudad</th>
                             <th>Marca</th>
                             <th>Motivo</th>
-                            {/* <th>Foto</th> */}
+                            <th>Foto</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,9 +116,9 @@ const Usuarios = () => {
                                     <td>{item.city}</td>
                                     <td>{item.brand}</td>
                                     <td>{item.reason}</td>
-                                    {/* <td>
+                                    <td>
                                         <img src={item.photoCheck} width={30} height={30} />
-                                    </td> */}
+                                    </td>
                                 </tr>
                             )
                         })}
