@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { FirebaseContext } from '@/firebase';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ const UserDetail = () => {
     const [userData, setUserData] = useState({});
     const [userTimerData, setUserTimerData] = useState([]);
     const [groupedData, setGroupedData] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
 
     const { usuario, firebase } = useContext(FirebaseContext);
 
@@ -37,6 +38,7 @@ const UserDetail = () => {
                     .where('idUser', '==', userRef)
                     .where('timetype', 'in', ['Hora de Entrada', 'Hora De Salida', 'Hora Salida Almuerzo', 'Hora Fin Almuerzo'])
                     .orderBy('hour', 'desc')
+                    .limit(10)
                     .get();
                 const newGroupedData = {};
 
@@ -71,6 +73,12 @@ const UserDetail = () => {
         fetchUserTimerData();
     }, [id, firebase]);
 
+    const paginatedUserTimerData = useMemo(() => {
+        const startIndex = (currentPage - 1) * 10; // 10 registros por página
+        const endIndex = startIndex + 10;
+        return userTimerData.slice(startIndex, endIndex);
+    }, [currentPage, userTimerData]);
+
     return (
         <Layout>
             <Link href="/usuarios">
@@ -95,7 +103,7 @@ const UserDetail = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {userTimerData.map((data, index) => (
+                    {paginatedUserTimerData.map((data, index) => (
                         <tr key={index}>
                             <td>{userData.name}</td>
                             <td>{userData.lastname}</td>
@@ -110,6 +118,21 @@ const UserDetail = () => {
                     ))}
                 </tbody>
             </table>
+            {/* Paginación */}
+            <div className='pagination'>
+                <button
+                    onClick={() => setCurrentPage((prevPage) => prevPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    Anterior
+                </button>
+                <button
+                    onClick={() => setCurrentPage((prevPage) => prevPage + 1)}
+                    disabled={paginatedUserTimerData.length < 10} // 10 registros por página
+                >
+                    Siguiente
+                </button>
+            </div>
         </Layout>
     );
 };

@@ -1,47 +1,49 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import { useRouter } from 'next/router';
 import Layout from "../components/Layout/Layout";
 import Link from "next/link";
 import { FirebaseContext } from '@/firebase';
-import FirebaseExcelDownloadButton from "./descargarInforme";
-//import generateExcelReport from './example';
-
-//import { FaSearch, FaTimes, FaFilter } from 'react-icons/fa'
 
 function Usuarios() {
     const [data, setData] = useState([]);
     const [filterValue, setFilterValue] = useState('');
     const [filteredData, setFilteredData] = useState([]);
-    const [searchCedula, setSearchCedula] = useState('');
-    const [showFilter, setShowFilter] = useState(false);
-
-    const [selectedUserId, setSelectedUserId] = useState(null);
-
-    const handleUserClick = (userId) => {
-        setSelectedUserId(userId);
-    };
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10; // Número de registros por página
+    const [unsubscribe, setUnsubscribe] = useState(null);
 
     const { usuario, firebase } = useContext(FirebaseContext);
-
     const router = useRouter();
 
-    useEffect(() => {
-        const getDataUser = firebase.queryCollection();
-        const collectionRef = getDataUser.collection('users')
+    const fetchData = async () => {
+        try {
+            const collectionRef = firebase.queryCollection().collection('users')
 
-        const unsubscribe = collectionRef.onSnapshot((snapshot) => {
+            // Consulta paginada
+            const snapshot = await collectionRef.get(); // Elimina el límite de 10 registros
+
             const newData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
             setData(newData);
-            setFilteredData(newData);
-        });
+        } catch (error) {
+            console.error('Error al recuperar datos:', error);
+        }
+    };
+
+    useEffect(() => {
+        const unsubscribeFunction = fetchData();
+        setUnsubscribe(() => unsubscribeFunction);
 
         if (!usuario) {
             router.push('/');
         }
 
-        return () => unsubscribe();
-    }, [firebase, usuario]);
-    //console.log(data)
+        return () => {
+            // Al desmontar el componente, cancela la suscripción si existe
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [firebase, usuario, router]);
 
     useEffect(() => {
         // Filtrar los datos en función del valor ingresado por el usuario
@@ -54,14 +56,28 @@ function Usuarios() {
         });
 
         setFilteredData(filtered);
-    }, [filterValue, data, firebase]);
+        setCurrentPage(1); // Reinicia la página actual al filtrar
+    }, [filterValue, data]);
 
-    //<FirebaseExcelDownloadButton />
+    // Usar useMemo para calcular los datos a mostrar en la página actual
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        return filteredData.slice(startIndex, endIndex);
+    }, [currentPage, filteredData]);
+
+    const totalPages = Math.ceil(filteredData.length / pageSize);
 
     return (
         <div>
             <Layout>
                 <h1>Desde usuarios</h1>
+                <input
+                    type="text"
+                    placeholder="Filtrar por Documento o Apellido"
+                    value={filterValue}
+                    onChange={(e) => setFilterValue(e.target.value)}
+                />
                 <table>
                     <thead>
                         <tr>
@@ -76,10 +92,8 @@ function Usuarios() {
                         </tr>
                     </thead>
                     <tbody>
-                        {data.map((user) => {
-
+                        {paginatedData.map((user) => {
                             return (
-
                                 <tr key={user.id}>
                                     <td>{user.document}</td>
                                     <td>{user.name}</td>
@@ -98,7 +112,22 @@ function Usuarios() {
                         })}
                     </tbody>
                 </table>
-
+                {/* Controles de paginación */}
+                <div className="pagination">
+                    <button
+                        onClick={() => setCurrentPage((prevPage) => prevPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Anterior
+                    </button>
+                    <span>{currentPage} de {totalPages}</span>
+                    <button
+                        onClick={() => setCurrentPage((prevPage) => prevPage + 1)}
+                        disabled={currentPage === totalPages}
+                    >
+                        Siguiente
+                    </button>
+                </div>
             </Layout>
         </div>
     )

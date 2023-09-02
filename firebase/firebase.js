@@ -14,6 +14,7 @@ class Firebase {
     this.db = app.firestore();
     this.storage = app.storage();
   }
+
   // Registra un usuario
   async registrar(
     nombre,

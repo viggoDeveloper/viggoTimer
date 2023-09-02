@@ -53,12 +53,12 @@ const Layout = ({ children }) => {
 
           table {
             position: absolute;
-            left: 320px;
+            left: 20%;
             width: 80%;
-            height: 65%;
+            height: 80%;
             display: block;
-            overflow-x: auto;
-            white-space: nowrap;
+            //overflow-x: auto;
+            //white-space: nowrap;
           }
           
           th,
@@ -103,7 +103,29 @@ const Layout = ({ children }) => {
               }
             }
           }
-        
+          
+          .pagination {
+            left: 20%;
+            position:absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25%; /* Espacio entre la tabla y los botones de paginación */
+          }
+          
+          .pagination button {
+            margin: 0 5px; /* Espacio entre los botones de paginación */
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 15px;
+          }
+          
+          .pagination button:hover {
+            background-color: #0056b3;
+          }
         `}
       />
       <Header />
