@@ -54,17 +54,17 @@ const Layout = ({ children }) => {
           table {
             position: absolute;
             left: 20%;
-            width: 80%;
-            height: 80%;
-            display: block;
+            width: 60%;
+            height: 10%;
+            //display: block;
             //overflow-x: auto;
             //white-space: nowrap;
           }
           
           th,
           td {
-            margin: 5px;
-            padding: 8px;
+            margin: 4px;
+            padding: 4px;
             background-color: rgba(255, 255, 255, 0.2);
             color: #000;
           }
@@ -110,7 +110,7 @@ const Layout = ({ children }) => {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 35%; /* Espacio entre la tabla y los botones de paginación */
+            margin-top: 28%; /* Espacio entre la tabla y los botones de paginación */
           }
           
           .pagination button {
@@ -124,6 +124,29 @@ const Layout = ({ children }) => {
           }
           
           .pagination button:hover {
+            background-color: #0056b3;
+          }
+
+          .paginationtwo {
+            left: 20%;
+            position:absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 22%; /* Espacio entre la tabla y los botones de paginación */
+          }
+          
+          .paginationtwo button {
+            margin: 0 5px; /* Espacio entre los botones de paginación */
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 15px;
+          }
+          
+          .paginationtwo button:hover {
             background-color: #0056b3;
           }
         `}

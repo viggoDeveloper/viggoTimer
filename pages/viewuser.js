@@ -78,7 +78,7 @@ const Usuarios = () => {
     return (
         <div>
             <Layout>
-                <h1>Desde usuarios</h1>
+                <h3>Desde usuarios</h3>
                 <FirebaseExcelDownloadButton />
                 <input
                     type="text"

@@ -71,7 +71,7 @@ function Usuarios() {
     return (
         <div>
             <Layout>
-                <h1>Desde usuarios</h1>
+                <h3>Desde usuarios</h3>
                 <input
                     type="text"
                     placeholder="Filtrar por Documento o Apellido"
@@ -113,7 +113,7 @@ function Usuarios() {
                     </tbody>
                 </table>
                 {/* Controles de paginación */}
-                <div className="pagination">
+                <div className="paginationtwo">
                     <button
                         onClick={() => setCurrentPage((prevPage) => prevPage - 1)}
                         disabled={currentPage === 1}
